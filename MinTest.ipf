@@ -37,6 +37,9 @@ End
 Function eq_wave(got, want)
 	WAVE got, want
 	add_count()
+	if(numpnts(got) == 0 && numpnts(want) == 0)
+		return 1
+	endif
 	Variable g0 = DimSize(got, 0), w0 = DimSize(want, 0)
 	Variable g1 = DimSize(got, 1), w1 = DimSize(want, 1)
 	Variable g2 = DimSize(got, 2), w2 = DimSize(want, 2)
@@ -57,6 +60,9 @@ End
 Function eq_text(got, want)
 	WAVE/T got, want
 	add_count()
+	if(numpnts(got) == 0 && numpnts(want) == 0)
+		return 1
+	endif
 	Variable g0 = DimSize(got, 0), w0 = DimSize(want, 0)
 	Variable g1 = DimSize(got, 1), w1 = DimSize(want, 1)
 	Variable g2 = DimSize(got, 2), w2 = DimSize(want, 2)
