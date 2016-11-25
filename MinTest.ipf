@@ -4,120 +4,158 @@
 // Public Functions /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
 
+// (1) check whether values of two variables (real numbers) are equal,
+//     where NaN is equal to NaN
 Function eq_var(got, want)
 	Variable got, want
-	add_count()
-	if(got == want)
-		return 1
+
+	if( eq_as_number(got, want) )
+		return pass()
+	else
+		print_callers_information()
+		print "\tgot :", got
+		print "\twant:", want
+		return fail()
 	endif
-	
-	String info = func_info()
-	print "---", info
-	print "\tgot :", got
-	print "\twant:", want
-	add_log(info)
-	return 0
 End
 
+// (2) check whether values of two strings are equal
 Function eq_str(got, want)
-	String got, want
-	add_count()
-	if(cmpstr(got, want) == 0)
-		return 1
-	endif
+	String got, want	
 
-	String info = func_info()
-	print "---", info
-	print "\tgot :", got
-	print "\twant:", want
-	add_log(info)
-	return 0
+	if( eq_as_string(got, want) )
+		return pass()
+	else
+		print_callers_information()
+		print "\tgot :", got
+		print "\twant:", want
+		return fail()
+	endif
 End
 
+// (3) check whether values of two numerical waves are equal, 
+//     where invalid wave reference is equal to a zero wave {}
 Function eq_wave(got, want)
 	WAVE got, want
-	add_count()
-	if(numpnts(got) == 0 && numpnts(want) == 0)
-		return 1
-	endif
-	Variable g0 = DimSize(got, 0), w0 = DimSize(want, 0)
-	Variable g1 = DimSize(got, 1), w1 = DimSize(want, 1)
-	Variable g2 = DimSize(got, 2), w2 = DimSize(want, 2)
-	Variable g3 = DimSize(got, 3), w3 = DimSize(want, 3)
-	Make/FREE/N=(g0, g1, g2, g3) bool = (got == want)
-	if(g0 == w0 && g1 == w1 && g2 == w2 && g3 == w3 && WaveMin(bool) == 1)
-		return 1
-	endif
 
-	String info = func_info()
-	print "---", info
-	print "\tgot :", got
-	print "\twant:", want
-	add_log(info)
-	return 0	
+	if( eq_as_numerical_wave(got, want) )
+		return pass()
+	else
+		print_callers_information()
+		print "\tgot :", got
+		print "\twant:", want
+		return fail()
+	endif
 End
 
+// (4) check whether values of two text waves are equal, 
+//     where invalid wave reference is equal to a zero wave {}
 Function eq_text(got, want)
 	WAVE/T got, want
-	add_count()
-	if(numpnts(got) == 0 && numpnts(want) == 0)
-		return 1
-	endif
-	Variable g0 = DimSize(got, 0), w0 = DimSize(want, 0)
-	Variable g1 = DimSize(got, 1), w1 = DimSize(want, 1)
-	Variable g2 = DimSize(got, 2), w2 = DimSize(want, 2)
-	Variable g3 = DimSize(got, 3), w3 = DimSize(want, 3)
-	Make/FREE/N=(g0, g1, g2, g3) bool = abs(cmpstr(got, want) == 0)
-	if(g0 == w0 && g1 == w1 && g2 == w2 && g3 == w3 && WaveMin(bool) == 1)
-		return 1
-	endif
 
-	String info = func_info()
-	print "---", info
-	print "\tgot :", got
-	print "\twant:", want
-	add_log(info)
-	return 0	
-End
-
-Function run_test(function_list)
-	String function_list
-	init_log()
-	Variable i, Ni = ItemsInList(function_list), do_test=0
-	for(i=0;i<Ni;i+=1)
-		String function_name = StringFromList(i,function_list)
-		String test_list = FunctionList(function_name,";","NPARAMS:0")
-		Variable j,Nj = ItemsInList(test_list)
-		for(j = 0; j < Nj; j += 1)
-			print "===", StringFromList(j,test_list)
-			String test = StringFromList(j,test_list)
-			Execute/Z test + "()"
-			do_test = 1
-		endfor
-	endfor
-	Variable fails = DimSize(get_log(), 0), tests = get_count()
-	String cmd = "run_test(\"" + function_list + "\")"
-	if(do_test)
-		add_task(cmd)
-		if(fails)
-			print "NG! (pass " + Num2Str(tests - fails) + "/" + Num2Str(tests) + ")"
-		else
-			print "OK! (pass " + Num2Str(tests - fails) + "/" + Num2Str(tests) + ")"
-			remove_task(cmd)
-		endif
+	if( eq_as_text_wave(got, want) )
+		return pass()
 	else
-		print "NO TEST"
-		remove_task(cmd)
+		print_callers_information()
+		print "\tgot :", got
+		print "\twant:", want
+		return fail()
 	endif
 End
 
-/////////////////////////////////////////////////////////////////////////////////
-// Log Functions ////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+// Functions for equlity testing ///////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
-static Function/S func_info()
+static Function eq_as_number(v1, v2)
+	Variable v1, v2
+	return (NumType(v1) == 2 && NumType(v2) == 2) || v1 == v2
+End
+
+static Function eq_as_string(s1,s2)
+	String s1, s2
+	return !cmpstr(s1,s2)
+End
+
+static Function eq_as_numerical_wave(w1, w2)
+	WAVE w1, w2
+	if( numpnts(w1) == 0 && numpnts(w2) == 0 )
+		return 1
+	elseif( eq_wave_size(w1,w2) )
+		Make/FREE/N=(DimSize(w1, 0), DimSize(w1, 1), DimSize(w1, 2), DimSize(w1, 3)) bool
+		bool = eq_as_number(w1,w2)
+		return WaveMin(bool)
+	else
+		return 0
+	endif
+End
+
+static Function eq_as_text_wave(w1, w2)
+	WAVE/T w1, w2
+	if( numpnts(w1) == 0 && numpnts(w2) == 0 )
+		return 1
+	elseif( eq_wave_size(w1,w2) )
+		Make/FREE/N=(DimSize(w1, 0), DimSize(w1, 1), DimSize(w1, 2), DimSize(w1, 3)) bool
+		bool = eq_as_string(w1,w2)
+		return WaveMin(bool)
+	else
+		return 0
+	endif
+End
+
+static Function eq_wave_size(w1, w2)
+	WAVE w1, w2
+	Variable bool = 1
+	bool = bool && DimSize(w1, 0) == DimSize(w2, 0)
+	bool = bool && DimSize(w1, 1) == DimSize(w2, 1)
+	bool = bool && DimSize(w1, 2) == DimSize(w2, 2)
+	bool = bool && DimSize(w1, 3) == DimSize(w2, 3)
+	return bool
+End
+
+////////////////////////////////////////////////////////////////////////////////
+// Functions for logging ///////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+static Function pass()
+	NewDataFolder/O root:Packages
+	NewDataFolder/O root:Packages:MinTest
+	WAVE/T pass = root:Packages:MinTest:pass
+	WAVE/T fail = root:Packages:MinTest:fail
+	if(!WaveExists(pass))
+		Make/T/N=0 $"root:Packages:MinTest:pass"/WAVE=pass
+	endif
+	if(!WaveExists(fail))
+		Make/T/N=0 $"root:Packages:MinTest:fail"/WAVE=fail
+	endif
+	
+	String info = callers_information()
+	Extract/O/T fail, fail, cmpstr(fail, info)
+	Extract/O/T pass, pass, cmpstr(pass, info)
+
+	InsertPoints DimSize(pass,0), 1, pass
+	pass[inf] = info
+	return 1
+End
+static Function fail()
+	NewDataFolder/O root:Packages
+	NewDataFolder/O root:Packages:MinTest
+	WAVE/T fail = root:Packages:MinTest:fail
+	if(!WaveExists(fail))
+		Make/T/N=0 $"root:Packages:MinTest:fail"/WAVE=fail
+	endif
+
+	String info = callers_information()
+	Extract/O/T fail, fail, cmpstr(fail, info)
+
+	InsertPoints DimSize(fail,0), 1, fail
+	fail[inf] = info
+	return 0
+End
+
+static Function/S callers_information()
 	String stacks = GetRTStackInfo(3)
-	String info = StringFromList(ItemsInList(stacks)-3, stacks) 
+	String info = StringFromList(ItemsInList(stacks)-4, stacks)
 	String win = StringFromList(1, info, ",")
 	Variable line = Str2Num(StringFromList(2, info, ","))
 	String text = StringFromList(line, ProcedureText("", -1, win), "\r")
@@ -125,131 +163,110 @@ static Function/S func_info()
 	return info + ": " + text
 End
 
-
-static Function/WAVE init_log()
-	NewDataFolder/O root:Packages
-	NewDataFolder/O root:Packages:MinTest
-	Make/O/T/N = 0 $"root:Packages:MinTest:testlog"/WAVE = w
-	return w
+static Function print_callers_information()
+	print "---", callers_information()
 End
 
-static Function add_log(s)
-	String s
-	WAVE/T w = root:Packages:MinTest:testlog
-	if(!WaveExists(w))
-		WAVE/T w = init_log()
-	endif
-	InsertPoints DimSize(w, 0), 1, w
-	w[inf] = s
+static Function/S status()
+	WAVE/T pass = root:Packages:MinTest:pass
+	WAVE/T fail = root:Packages:MinTest:fail
+	Variable num_pass = WaveExists(pass) ? DimSize(pass,0) : 0
+	Variable num_fail = WaveExists(fail) ? DimSize(fail,0) : 0
+	Variable num_total = num_pass + num_fail
+	if(num_total == 0)
+		return ""
+	elseif(num_fail)
+		return "NG! (pass " + Num2Str(num_pass) + "/" + Num2Str(num_total) + ")"
+	elseif(num_total)
+		return "OK! (pass " + Num2Str(num_pass) + "/" + Num2Str(num_total) + ")"
+	endif	
 End
 
-static Function/WAVE get_log()
-	WAVE/T w = root:Packages:MinTest:testlog
-	if(!WaveExists(w))
-		WAVE/T w = init_log()
-	endif
-	return w
+static Function start()
+	KillWaves/Z root:Packages:MinTest:pass
+	KillWaves/Z root:Packages:MinTest:fail
 End
 
-static Function init_count()
-	NewDataFolder/O root:Packages
-	NewDataFolder/O root:Packages:MinTest
-	Variable/G root:Packages:MinTest:testcount = 0
+static Function finish()
+	BuildMenu "All"
+	String s = status()
+	print SelectString(strlen(s), "NO TEST", s)
 End
 
-static Function add_count()
-	String s
-	NVAR v = root:Packages:MinTest:testcount
-	if(!NVAR_Exists(v))
-		init_count()
-		NVAR v = root:Packages:MinTest:testcount
-	endif
-	v += 1	
-End
-
-static Function get_count()
-	NVAR v = root:Packages:MinTest:testcount
-	return v
-End
-
-static Function/WAVE init_task()
-	NewDataFolder/O root:Packages
-	NewDataFolder/O root:Packages:MinTest
-	Make/O/T/N = 0 $"root:Packages:MinTest:testlist"/WAVE = w
-	return w
-End
-
-static Function add_task(cmd)
-	String cmd
-	remove_task(cmd)
-	WAVE/T w = root:Packages:MinTest:testlist
-	InsertPoints DimSize(w,0), 1, w
-	w[inf] = cmd
-End
-
-static Function remove_task(cmd)
-	String cmd
-	WAVE/T w = root:Packages:MinTest:testlist
-	if(!WaveExists(w))
-		WAVE/T w = init_task()
-	endif
-	Extract/T/O w,w,cmpstr(w,cmd)
-	w[0] = cmd
-End
-
-static Function/WAVE get_task()
-	WAVE/T w = root:Packages:MinTest:testlist
-	if(!WaveExists(w))
-		WAVE/T w = init_task()
-	endif
-	return w
-End
 
 /////////////////////////////////////////////////////////////////////////////////
 // Menu Functions ///////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
 
 strconstant MinTest_Menu="Test"
-Menu StringFromList(0,MinTest_Menu), dynamic
-	RemoveListItem(0,MinTest_Menu)
-	"(Retry"
-	MinTest#MenuItemRetry(0),/Q,MinTest#MenuCommandRetry(0)
-	MinTest#MenuItemRetry(1),/Q,MinTest#MenuCommandRetry(1)
-	MinTest#MenuItemRetry(2),/Q,MinTest#MenuCommandRetry(2)
-	MinTest#MenuItemRetry(3),/Q,MinTest#MenuCommandRetry(3)
-	MinTest#MenuItemRetry(4),/Q,MinTest#MenuCommandRetry(4)
-	"-"
-	"(Jump"
+Menu MinTest#MenuTitle(), dynamic
+	
+	MinTest#MenuTitleJump()
 	MinTest#MenuItemJump(0),/Q,MinTest#MenuCommandJump(0)
 	MinTest#MenuItemJump(1),/Q,MinTest#MenuCommandJump(1)
 	MinTest#MenuItemJump(2),/Q,MinTest#MenuCommandJump(2)
 	MinTest#MenuItemJump(3),/Q,MinTest#MenuCommandJump(3)
 	MinTest#MenuItemJump(4),/Q,MinTest#MenuCommandJump(4)
+	
+	MinTest#MenuItemExecuteAll(),/Q,MinTest#MenuCommandExecuteAll()
+	
+	"-"
+	"(Test"
+	FunctionList("Test*",";","NPARAMS:0"),/Q,MinTest#MenuCommandExecute()
 End
 
-static Function/S MenuItemRetry(i)
-	Variable i
-	WAVE/T w = get_task()
-	return SelectString(i<DimSize(w,0), "", "\M0"+w[i])
+static Function/S MenuTitle()
+	String s = status()
+	return SelectString(strlen(s),"Test","Test:"+s)
 End
 
-static Function MenuCommandRetry(i)
-	Variable i
-	WAVE/T w = get_task()
-	print num2char(cmpstr(IgorInfo(2), "Macintosh") ? 42 : -91) + w[i]
-	Execute w[i]
+static Function/S MenuTitleJump()
+	WAVE/T w = root:Packages:MinTest:fail
+	return SelectString(WaveExists(w) && DimSize(w,0),"","(Jump")
 End
 
 static Function/S MenuItemJump(i)
 	Variable i
-	WAVE/T w = get_log()
-	return SelectString(i<DimSize(w,0), "", "\M0"+w[i])
+	WAVE/T w = root:Packages:MinTest:fail
+	if(WaveExists(w) && i<DimSize(w,0))
+		return "\M0"+w[i]
+	endif
 End
 
 static Function MenuCommandJump(i)
 	Variable i
-	WAVE/T w = get_log()
+	WAVE/T w = root:Packages:MinTest:fail
 	String win,line
 	SplitString/E = "^[^,]+,([^,]+),([0-9]+):" w,win,line
 	DisplayProcedure/W=$win/L=(Str2Num(line))
 End
+
+static Function/S MenuItemExecuteAll()
+	WAVE/T w = root:Packages:MinTest:fail
+	return SelectString(WaveExists(w) && DimSize(w,0),"","-;")+"Execute All Tests"
+End
+
+static Function MenuCommandExecuteAll()
+	start()
+	
+	String tests = FunctionList("Test*",";","NPARAMS:0")
+	Variable i, N = ItemsInList(tests)
+	for(i = 0; i < N; i += 1)
+		printf num2char(cmpstr(IgorInfo(2),"Macintosh") ? 42 : -91)
+		print StringFromList(i, tests) + "()"
+		Execute/Z StringFromList(i, tests) + "()"
+	endfor
+	
+	finish()
+End
+
+static Function MenuCommandExecute()
+	start()
+	
+	GetLastUserMenuInfo
+	printf num2char(cmpstr(IgorInfo(2),"Macintosh") ? 42 : -91)
+	print S_Value + "()"
+	Execute S_Value + "()"
+	
+	finish()
+End 
