@@ -2,14 +2,13 @@
 A minimal library for unit testing
 
 ## Features
- - Only five public functions
+ - Only four public functions
     - eq_var
     - eq_str
     - eq_wave
     - eq_text
-    - run_test
- - Jumpping to failed lines from the menu bar
- - Retrying tests from menu bar
+ - Run tests from the menu bar
+ - Jump to failed lines from the menu bar
  
 ## Example 
 ```
