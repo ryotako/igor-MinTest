@@ -183,8 +183,12 @@ static Function/S status()
 End
 
 static Function start()
-	KillWaves/Z root:Packages:MinTest:pass
-	KillWaves/Z root:Packages:MinTest:fail
+	if(WaveExists(root:Packages:MinTest:pass))
+		KillWaves/Z root:Packages:MinTest:pass
+	endif
+	if(WaveExists(root:Packages:MinTest:fail))
+		KillWaves/Z root:Packages:MinTest:fail
+	endif
 End
 
 static Function finish()
