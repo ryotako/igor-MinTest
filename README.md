@@ -1,5 +1,5 @@
 # igor-MinTest
-A minimal library for unit testing
+A minimal unit testing library for Igor Pro
 
 ## Features
  - Only four public functions
