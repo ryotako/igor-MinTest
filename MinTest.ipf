@@ -120,13 +120,13 @@ End
 static Function pass()
 	NewDataFolder/O root:Packages
 	NewDataFolder/O root:Packages:MinTest
-	WAVE/T pass = root:Packages:MinTest:pass
-	WAVE/T fail = root:Packages:MinTest:fail
+	WAVE/T pass = root:Packages:MinTest:W_pass
+	WAVE/T fail = root:Packages:MinTest:W_fail
 	if(!WaveExists(pass))
-		Make/T/N=0 $"root:Packages:MinTest:pass"/WAVE=pass
+		Make/T/N=0 $"root:Packages:MinTest:W_pass"/WAVE=pass
 	endif
 	if(!WaveExists(fail))
-		Make/T/N=0 $"root:Packages:MinTest:fail"/WAVE=fail
+		Make/T/N=0 $"root:Packages:MinTest:W_fail"/WAVE=fail
 	endif
 	
 	String info = callers_information()
@@ -140,9 +140,9 @@ End
 static Function fail()
 	NewDataFolder/O root:Packages
 	NewDataFolder/O root:Packages:MinTest
-	WAVE/T fail = root:Packages:MinTest:fail
+	WAVE/T fail = root:Packages:MinTest:W_fail
 	if(!WaveExists(fail))
-		Make/T/N=0 $"root:Packages:MinTest:fail"/WAVE=fail
+		Make/T/N=0 $"root:Packages:MinTest:W_fail"/WAVE=fail
 	endif
 
 	String info = callers_information()
@@ -168,8 +168,8 @@ static Function print_callers_information()
 End
 
 static Function/S status()
-	WAVE/T pass = root:Packages:MinTest:pass
-	WAVE/T fail = root:Packages:MinTest:fail
+	WAVE/T pass = root:Packages:MinTest:W_pass
+	WAVE/T fail = root:Packages:MinTest:W_fail
 	Variable num_pass = WaveExists(pass) ? DimSize(pass,0) : 0
 	Variable num_fail = WaveExists(fail) ? DimSize(fail,0) : 0
 	Variable num_total = num_pass + num_fail
@@ -183,11 +183,11 @@ static Function/S status()
 End
 
 static Function start()
-	if(WaveExists(root:Packages:MinTest:pass))
-		KillWaves/Z root:Packages:MinTest:pass
+	if(WaveExists(root:Packages:MinTest:W_pass))
+		KillWaves/Z root:Packages:MinTest:W_pass
 	endif
-	if(WaveExists(root:Packages:MinTest:fail))
-		KillWaves/Z root:Packages:MinTest:fail
+	if(WaveExists(root:Packages:MinTest:W_fail))
+		KillWaves/Z root:Packages:MinTest:W_fail
 	endif
 End
 
@@ -225,13 +225,13 @@ static Function/S MenuTitle()
 End
 
 static Function/S MenuTitleJump()
-	WAVE/T w = root:Packages:MinTest:fail
+	WAVE/T w = root:Packages:MinTest:W_fail
 	return SelectString(WaveExists(w) && DimSize(w,0),"","(Jump")
 End
 
 static Function/S MenuItemJump(i)
 	Variable i
-	WAVE/T w = root:Packages:MinTest:fail
+	WAVE/T w = root:Packages:MinTest:W_fail
 	if(WaveExists(w) && i<DimSize(w,0))
 		return "\M0"+w[i]
 	endif
@@ -239,14 +239,14 @@ End
 
 static Function MenuCommandJump(i)
 	Variable i
-	WAVE/T w = root:Packages:MinTest:fail
+	WAVE/T w = root:Packages:MinTest:W_fail
 	String win,line
 	SplitString/E = "^[^,]+,([^,]+),([0-9]+):" w,win,line
 	DisplayProcedure/W=$win/L=(Str2Num(line))
 End
 
 static Function/S MenuItemExecuteAll()
-	WAVE/T w = root:Packages:MinTest:fail
+	WAVE/T w = root:Packages:MinTest:W_fail
 	return SelectString(WaveExists(w) && DimSize(w,0),"","-;")+"Execute All Tests"
 End
 
